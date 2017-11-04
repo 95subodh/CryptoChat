@@ -3,6 +3,8 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var port = process.env.PORT || 3000;
 
+var queue = [];
+
 var numUsers = 0;
 
 app.get('/', function(req, res){
@@ -14,10 +16,21 @@ io.on('connection', function(socket){
 
   socket.on('chat message', function(msg){
     // io.emit('chat message', msg);
+    queue.push({
+      username: socket.username,
+      message: msg
+    });
+    if (queue.length>200) {
+    	queue.shift();
+    }
     socket.broadcast.emit('chat message', {
       username: socket.username,
       message: msg
     });
+  });
+
+  socket.on('prev messages', function(){
+  	socket.emit('prev messages2', queue);
   });
 
   socket.on('add user', function (username) {
